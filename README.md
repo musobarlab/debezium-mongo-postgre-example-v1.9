@@ -11,6 +11,9 @@ https://debezium.io/documentation/reference/1.9/connectors/mongodb.html
 $ docker exec -it mongodb mongo -u admin -p admin --eval 'rs.initiate({_id: "debezium_rs", members:[{_id: 0, host: "mongodb:27017"}]})'
 ```
 
+## Kafka Connect Rest API
+https://docs.confluent.io/platform/current/connect/references/restapi.html#kconnect-rest-interface
+
 ### Start JDBC Sink Connector or open `debezium-connector.postman_collection.json`
 ```shell
 $ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://127.0.0.1:8083/connectors/ -d @jdbc-sink.json
