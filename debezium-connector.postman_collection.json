@@ -69,6 +69,53 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Check Cluster",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8083",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8083"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "show active connectors",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8083/connectors?expand=status",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8083",
+					"path": [
+						"connectors"
+					],
+					"query": [
+						{
+							"key": "expand",
+							"value": "status"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
