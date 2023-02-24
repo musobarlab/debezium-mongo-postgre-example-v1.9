@@ -1,0 +1,99 @@
+version: '3'
+
+services:
+
+  # Debezium Connect 1.9
+  # https://debezium.io/releases/1.9/
+  # https://debezium.io/documentation/reference/1.9/connectors/mongodb.html#mongodb-property-capture-mode
+  # mongo "mongodb://admin:admin@127.0.0.1/debeziumtest?replicaSet=debezium_rs"
+  mongodb:
+    image: mongo:3.6
+    container_name: "mongodb"
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+      - MONGO_INITDB_DATABASE=debeziumtest
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    volumes:
+      - ./deployments/mongo/001_users.js:/docker-entrypoint-initdb.d/001_users.js:ro
+      - ./data/db:/data/db
+    networks:
+      - web
+    ports:
+      - 27017:27017
+    command: mongod --auth --replSet debezium_rs
+
+  # redis:
+  #   image: "redis:6.2-alpine"
+  #   command: redis-server --requirepass devpass
+  #   volumes:
+  #     - "./data/redis:/data"
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - web
+  
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - web
+      
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_CREATE_TOPICS: "test:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_TIMEOUT_MS: 36000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web
+
+  # psql --dbname=debeziumtest --username=codebaseuser --password
+  postgres:
+    working_dir: /usr/app
+    volumes:
+        - ./data/postgres_data:/var/lib/postgresql/data
+    image: 'postgres:11.18-alpine'
+    environment:
+      POSTGRES_USER: codebaseuser
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB : debeziumtest
+      PG_VERSION: '11.18-alpine'
+    ports:
+        - "5432:5432"
+    networks:
+      - web
+    
+  # https://hub.docker.com/r/debezium/connect
+  connect:
+    image: debezium/connect-jdbc:${DEBEZIUM_VERSION}
+    build:
+      context: debezium-jdbc
+      args:
+        DEBEZIUM_VERSION: ${DEBEZIUM_VERSION}
+    ports:
+      - 8083:8083
+    networks:
+      - web
+    depends_on:
+      - kafka
+      - mongodb
+      - postgres
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=my_connect_configs
+      - OFFSET_STORAGE_TOPIC=my_connect_offsets
+      - STATUS_STORAGE_TOPIC=my_source_connect_statuses
+networks:
+  web:
+    driver: bridge

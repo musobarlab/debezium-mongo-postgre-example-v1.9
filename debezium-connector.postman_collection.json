@@ -1,0 +1,74 @@
+{
+	"info": {
+		"_postman_id": "d3f24024-38b3-461d-8e99-cdbbebd67456",
+		"name": "debezium-connector",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "543626"
+	},
+	"item": [
+		{
+			"name": "start jdbc sink",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\" : \"jdbc-sink\",\r\n    \"config\" : {\r\n        \"connector.class\" : \"io.confluent.connect.jdbc.JdbcSinkConnector\",\r\n        \"tasks.max\" : \"1\",\r\n        \"topics\" : \"products\",\r\n        \"connection.url\" : \"jdbc:postgresql://postgres:5432/debeziumtest?user=codebaseuser&password=12345678\",\r\n        \"auto.create\" : \"true\",\r\n        \"auto.evolve\" : \"true\",\r\n        \"insert.mode\" : \"upsert\",\r\n        \"delete.enabled\": \"true\",\r\n        \"pk.fields\" : \"id\",\r\n        \"pk.mode\": \"record_key\",\r\n        \"transforms\": \"mongoflatten\",\r\n        \"transforms.mongoflatten.type\" : \"io.debezium.connector.mongodb.transforms.ExtractNewDocumentState\",\r\n        \"transforms.mongoflatten.drop.tombstones\": \"false\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8083/connectors/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "start mongodb source",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"mongodb-debeziumtest-source\",\r\n    \"config\": {\r\n        \"connector.class\" : \"io.debezium.connector.mongodb.MongoDbConnector\",\r\n        \"capture.mode\": \"oplog\",\r\n        \"tasks.max\" : \"1\",\r\n        \"mongodb.name\" : \"mongodb_dbserver1\",\r\n        \"mongodb.hosts\" : \"debezium_rs/mongodb:27017\",\r\n        \"mongodb.user\" : \"admin\",\r\n        \"mongodb.password\" : \"admin\",\r\n        \"database.include.list\" : \"debeziumtest\",\r\n        \"database.history.kafka.bootstrap.servers\" : \"kafka:9092\",\r\n        \"transforms\": \"route\",\r\n        \"transforms.route.type\" : \"org.apache.kafka.connect.transforms.RegexRouter\",\r\n        \"transforms.route.regex\" : \"([^.]+)\\\\.([^.]+)\\\\.([^.]+)\",\r\n        \"transforms.route.replacement\" : \"$3\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8083/connectors/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
