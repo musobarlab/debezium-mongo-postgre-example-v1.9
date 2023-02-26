@@ -30,6 +30,7 @@ $ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/jso
 ```
 db.products.insert({sku: "10000", category: "Gadget", name: "Samsung Galaxy s2", quantity: 10});
 db.products.insert({sku: "10001", category: "Gadget", name: "Nokia 6", quantity: 10});
+db.products.insert({sku: "10003", category: "Gadget", name: "Nokia 10", quantity: 10, tags:[{name: "gadget", description: "xxx"}, {name: "nokia10", description: "nokia xxx"}]});
 
 db.products.update({sku: "10001"}, {$set:{quantity: 5}});
 ```

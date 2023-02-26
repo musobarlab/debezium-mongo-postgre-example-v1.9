@@ -1,0 +1,17 @@
+{
+    "name": "mongodb-debeziumtest-source",
+    "config": {
+        "connector.class" : "io.debezium.connector.mongodb.MongoDbConnector",
+        "capture.mode": "oplog",
+        "tasks.max" : "1",
+        "mongodb.name" : "mongodb_dbserver1",
+        "mongodb.hosts" : "debezium_rs/mongodb:27017",
+        "mongodb.user" : "admin",
+        "mongodb.password" : "admin",
+        "database.include.list" : "debeziumtest",
+        "database.history.kafka.bootstrap.servers" : "kafka:9092",
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
+        "transforms.unwrap.array.encoding": "document"
+    }
+}
