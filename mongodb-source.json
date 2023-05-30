@@ -4,7 +4,7 @@
         "connector.class" : "io.debezium.connector.mongodb.MongoDbConnector",
         "capture.mode": "oplog",
         "tasks.max" : "1",
-        "mongodb.name" : "mongodb_dbserver1",
+        "mongodb.name" : "mongoserver1",
         "mongodb.hosts" : "debezium_rs/mongodb:27017",
         "mongodb.user" : "admin",
         "mongodb.password" : "admin",
@@ -13,6 +13,6 @@
         "transforms": "route",
         "transforms.route.type" : "org.apache.kafka.connect.transforms.RegexRouter",
         "transforms.route.regex" : "([^.]+)\\.([^.]+)\\.([^.]+)",
-        "transforms.route.replacement" : "$3"
+        "transforms.route.replacement" : "$1_$2$3"
     }
 }
