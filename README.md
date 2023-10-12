@@ -4,13 +4,6 @@
 $ docker-compose up
 ```
 
-### Initialize MongoDB replica set
-https://debezium.io/documentation/reference/1.9/connectors/mongodb.html
-
-```shell
-$ docker exec -it mongodb mongo -u admin -p admin --eval 'rs.initiate({_id: "debezium_rs", members:[{_id: 0, host: "mongodb:27017"}]})'
-```
-
 ## Kafka Connect Rest API
 https://docs.confluent.io/platform/current/connect/references/restapi.html#kconnect-rest-interface
 
@@ -37,14 +30,14 @@ db.products.update({sku: "10001"}, {$set:{quantity: 5}});
 
 ### Now, the data in the Postgres database should also change
 ```shell
-debeziumtest=# select * from products;
+debeziumtest=# select * from mongoserver555_debeziumtestproducts;
  quantity |       name        |            id            |           _id            |  sku  | category 
 ----------+-------------------+--------------------------+--------------------------+-------+----------
        10 | Samsung Galaxy s2 | 63f8a2cab909476648a56eda | 63f8a2cab909476648a56eda | 10000 | Gadget
        10 | Nokia 6           | 63f8a2ecb909476648a56edb | 63f8a2ecb909476648a56edb | 10001 | Gadget
 (2 rows)
 
-debeziumtest=# select * from products;
+debeziumtest=# select * from mongoserver555_debeziumtestproducts;
  quantity |       name        |            id            |           _id            |  sku  | category 
 ----------+-------------------+--------------------------+--------------------------+-------+----------
        10 | Samsung Galaxy s2 | 63f8a2cab909476648a56eda | 63f8a2cab909476648a56eda | 10000 | Gadget
