@@ -2,12 +2,15 @@ version: '3'
 
 services:
 
-  # Debezium Connect 1.9
-  # https://debezium.io/releases/1.9/
-  # https://debezium.io/documentation/reference/1.9/connectors/mongodb.html#mongodb-property-capture-mode
-  # mongo "mongodb://admin:admin@127.0.0.1/debeziumtest?replicaSet=debezium_rs"
+  # Debezium Connect 2.4
+  # https://debezium.io/releases/2.4/
+  # https://debezium.io/documentation/reference/2.4/connectors/mongodb.html#mongodb-property-capture-mode
+  # mongo "mongodb://debeziumtest:debeziumtest@127.0.0.1/debeziumtest?replicaSet=debezium_rs"
+
+  # https://www.mongodb.com/docs/manual/tutorial/enforce-keyfile-access-control-in-existing-replica-set/ 
+  # openssl rand -base64 756 > keyfile.txt
   mongodb:
-    image: mongo:3.6
+    image: mongo:5.0
     container_name: "mongodb"
     environment:
       - MONGO_DATA_DIR=/data/db
@@ -16,44 +19,31 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin
     volumes:
-      - ./deployments/mongo/001_users.js:/docker-entrypoint-initdb.d/001_users.js:ro
+      - ./deployments/mongo/replica.key:/data/replica.key.devel
       - ./data/db:/data/db
     networks:
       - web
     ports:
       - 27017:27017
-    command: mongod --auth --replSet debezium_rs
+    entrypoint:
+      - bash
+      - -c
+      - |
+          cp /data/replica.key.devel /data/replica.key
+          chmod 400 /data/replica.key
+          chown 999:999 /data/replica.key
+          exec docker-entrypoint.sh $$@ 
+    command: mongod --bind_ip_all --replSet debezium_rs --keyFile /data/replica.key
 
-  # redis:
-  #   image: "redis:6.2-alpine"
-  #   command: redis-server --requirepass devpass
-  #   volumes:
-  #     - "./data/redis:/data"
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - web
-  
-  zookeeper:
-    image: wurstmeister/zookeeper
-    ports:
-      - "2181:2181"
-    networks:
-      - web
-      
-  kafka:
-    image: wurstmeister/kafka
-    ports:
-      - "9092:9092"
+  mongo-setup:
+    image: mongo:5.0
+    container_name: mongo_setup
     depends_on:
-      - zookeeper
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_CREATE_TOPICS: "test:1:1"
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ZOOKEEPER_TIMEOUT_MS: 36000
+      - mongodb
+    restart: on-failure
+    entrypoint: ["/bin/bash", "/scripts/mongo_rs_init.sh"]
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./deployments/mongo/mongo_rs_init.sh:/scripts/mongo_rs_init.sh
     networks:
       - web
 
@@ -85,15 +75,26 @@ services:
     networks:
       - web
     depends_on:
-      - kafka
       - mongodb
       - postgres
     environment:
-      - BOOTSTRAP_SERVERS=kafka:9092
-      - GROUP_ID=1
+      - BOOTSTRAP_SERVERS=broker1:9093,broker2:9093,broker3:9093
+      - GROUP_ID=DEB_83948
       - CONFIG_STORAGE_TOPIC=my_connect_configs
       - OFFSET_STORAGE_TOPIC=my_connect_offsets
       - STATUS_STORAGE_TOPIC=my_source_connect_statuses
+      - ENABLE_DEBEZIUM_SCRIPTING=true
+      - CONNECT_SECURITY_PROTOCOL=SASL_PLAINTEXT
+      - CONNECT_SASL_MECHANISM=PLAIN
+      - CONNECT_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="123456";
+
+      - CONNECT_PRODUCER_SECURITY_PROTOCOL=SASL_PLAINTEXT
+      - CONNECT_PRODUCER_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="123456";
+      - CONNECT_PRODUCER_SASL_MECHANISM=PLAIN
+      - CONNECT_CONSUMER_SECURITY_PROTOCOL=SASL_PLAINTEXT
+      - CONNECT_CONSUMER_SASL_JAAS_CONFIG=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="123456";
+      - CONNECT_CONSUMER_SASL_MECHANISM=PLAIN
+      # - CONNECT_REST_EXTENSION_CLASSES=io.debezium.kcrestextension.DebeziumConnectRestExtension
 networks:
   web:
     driver: bridge
